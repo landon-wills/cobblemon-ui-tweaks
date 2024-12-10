@@ -54,7 +54,7 @@ public abstract class PCGUIMixin extends Screen {
             pastureWidget.getPastureScrollList().mouseScrolled(mouseX, mouseY, amount, verticalAmount);
         }
         else {
-            var newBox = (storageWidget.getBox() - (int)amount) % this.pc.getBoxes().size();
+            var newBox = (storageWidget.getBox() - (int)verticalAmount) % this.pc.getBoxes().size();
             storageWidget.setBox(newBox);
         }
 
