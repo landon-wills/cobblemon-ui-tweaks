@@ -52,7 +52,7 @@ public abstract class BattleMessagePaneMixin extends AbstractSelectionList {
         var queueWithBattleMessages = (ResizeableTextQueue)(Object)instance;
         // Any time a new battle message comes, we add it to the message list and determine how many lines should render (based on width).
         queueWithBattleMessages.cobblemon_ui_tweaks$subscribe(text -> {
-            battleMessages.add(text);
+             battleMessages.add(text);
             cobblemon_ui_tweaks$correctBattleText();
         });
     }

@@ -5,11 +5,11 @@ import com.cobblemon.mod.common.api.gui.blitk
 import com.cobblemon.mod.common.api.moves.MoveTemplate
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories
 import com.cobblemon.mod.common.api.text.font
+import com.cobblemon.mod.common.api.types.ElementalType
 import com.cobblemon.mod.common.client.CobblemonClient
 import com.cobblemon.mod.common.client.CobblemonResources
 import com.cobblemon.mod.common.client.render.drawScaledText
 import com.cobblemon.mod.common.util.asTranslated
-import com.cobblemon.mod.common.util.cobblemonResource
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.locale.Language
@@ -209,12 +209,14 @@ object MoveHoverRenderer {
     private fun getMoveEffectiveness(move: MoveTemplate): MutableComponent? {
         val battle = CobblemonClient.battle ?: return null
         val opponent = battle.side2.activeClientBattlePokemon.firstOrNull()?.battlePokemon ?: return null
-
         val aspects: Set<String> = ReflectionUtils.getPrivateField(opponent, "aspects") ?: return null
 
         val opponentForm = opponent.species.getForm(aspects)
         if (move.damageCategory == DamageCategories.STATUS) return null
-        return MoveEffectivenessCalculator.getMoveEffectiveness(move.elementalType, opponentForm.primaryType, opponentForm.secondaryType)
-    }
 
+        val primaryType: ElementalType = opponentForm.primaryType
+        val secondaryType: ElementalType? = opponentForm.secondaryType
+
+        return MoveEffectivenessCalculator.getMoveEffectiveness(move.elementalType, primaryType, secondaryType)
+    }
 }

@@ -8,20 +8,25 @@ import com.cobblemon.mod.common.client.storage.ClientPC;
 import com.cobblemon.mod.common.mixin.accessor.KeyBindingAccessor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PCGUI.class)
 public abstract class PCGUIMixin extends Screen {
-
     @Shadow(remap = false) private StorageWidget storageWidget;
     @Final @Shadow(remap = false) private ClientPC pc;
 
+
+    @Unique private final Logger LOGGER = LoggerFactory.getLogger("cobblemon-ui-tweaks");
     protected PCGUIMixin(Component component) {
         super(component);
     }
@@ -41,7 +46,7 @@ public abstract class PCGUIMixin extends Screen {
             pastureWidget.getPastureScrollList().mouseScrolled(mouseX, mouseY, amount, verticalAmount);
         }
         else {
-            var newBox = (storageWidget.getBox() - (int)amount) % this.pc.getBoxes().size();
+            var newBox = (storageWidget.getBox() - (int)verticalAmount) % this.pc.getBoxes().size();
             storageWidget.setBox(newBox);
         }
 
@@ -58,4 +63,20 @@ public abstract class PCGUIMixin extends Screen {
         GUIHandler.INSTANCE.onPCClose();
     }
 
+    @Inject(method = "init", at = @At(value = "TAIL"))
+    private void cobblemon_ui_tweaks$init(CallbackInfo ci) {
+        this.storageWidget.setBox(GUIHandler.INSTANCE.getLastPCBox());
+    }
+
+    @ModifyVariable(
+            method = "<init>(Lcom/cobblemon/mod/common/client/storage/ClientPC;Lcom/cobblemon/mod/common/client/storage/ClientParty;Lcom/cobblemon/mod/common/client/gui/pc/PCGUIConfiguration;I)V",
+            at = @At("HEAD"), // Modify the variable as soon as the constructor starts
+            index = 4,        // The 5th parameter (0-based: this, 1st, 2nd, 3rd, 4th)
+            name = "openOnBox",
+            argsOnly = true,
+            remap = false
+    )
+    private static int fixOpenOnBox(int value) {
+        return value == 0 ? GUIHandler.INSTANCE.getLastPCBox() : value;
+    }
 }

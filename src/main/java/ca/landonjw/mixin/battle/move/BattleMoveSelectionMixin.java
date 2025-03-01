@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
+import java.util.*;
 
 @Mixin(BattleMoveSelection.class)
 public class BattleMoveSelectionMixin {
@@ -44,6 +44,4 @@ public class BattleMoveSelectionMixin {
         if (guiScale == 1f) return 2.0f;
         return 1f;
     }
-
-
 }

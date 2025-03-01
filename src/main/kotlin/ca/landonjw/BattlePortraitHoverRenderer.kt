@@ -8,11 +8,17 @@ import com.cobblemon.mod.common.client.CobblemonClient.battle
 import com.cobblemon.mod.common.client.CobblemonResources
 import com.cobblemon.mod.common.client.battle.ActiveClientBattlePokemon
 import com.cobblemon.mod.common.client.gui.TypeIcon
-import com.cobblemon.mod.common.client.gui.battle.BattleOverlay
+import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.COMPACT_PORTRAIT_DIAMETER
+import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.COMPACT_PORTRAIT_OFFSET_X
+import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.COMPACT_PORTRAIT_OFFSET_Y
+import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.COMPACT_TILE_WIDTH
+import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.COMPACT_VERTICAL_SPACING
 import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.PORTRAIT_DIAMETER
 import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.PORTRAIT_OFFSET_X
 import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.PORTRAIT_OFFSET_Y
 import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.TILE_WIDTH
+import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.VERTICAL_INSET
+import com.cobblemon.mod.common.client.gui.battle.BattleOverlay.Companion.VERTICAL_SPACING
 import com.cobblemon.mod.common.client.render.drawScaledText
 import com.cobblemon.mod.common.pokemon.FormData
 import com.cobblemon.mod.common.pokemon.Species
@@ -43,7 +49,7 @@ object BattlePortraitHoverRenderer {
             renderIfHovered(context, mouseX, mouseY, activeClientBattlePokemon, true, index)
         }
 
-        side2.activeClientBattlePokemon.forEachIndexed { index, activeClientBattlePokemon ->
+        side2.activeClientBattlePokemon.reversed().forEachIndexed { index, activeClientBattlePokemon ->
             renderIfHovered(context, mouseX, mouseY, activeClientBattlePokemon, false, index)
         }
     }
@@ -51,14 +57,23 @@ object BattlePortraitHoverRenderer {
     private fun renderIfHovered(context: GuiGraphics, mouseX: Int, mouseY: Int, activeBattlePokemon: ActiveClientBattlePokemon, left: Boolean, rank: Int) {
         // Prevent render if pokemon is currently being swapped out
         if (activeBattlePokemon.animations.peek() !== null) return
+        val playerNumberOffset = (activeBattlePokemon.getActorShowdownId()[1].digitToInt() - 1) / 2 * 10
+        val isCompact = battle?.battleFormat?.battleType?.pokemonPerSide!! > 1
+
+        val titleWidth = if(isCompact) COMPACT_TILE_WIDTH else TILE_WIDTH
+        val verticalSpacing = if(isCompact) COMPACT_VERTICAL_SPACING else VERTICAL_SPACING
+        val portraitDiameter = if (isCompact) COMPACT_PORTRAIT_DIAMETER else PORTRAIT_DIAMETER
+        val portraitOffset_X = if (isCompact) COMPACT_PORTRAIT_OFFSET_X else PORTRAIT_OFFSET_X
+        val portraitOffset_Y = if (isCompact) COMPACT_PORTRAIT_OFFSET_Y else PORTRAIT_OFFSET_Y
+        val offset = if(isCompact) 30 else 40
 
         val x = activeBattlePokemon.xDisplacement
-        val y = BattleOverlay.VERTICAL_INSET + rank * BattleOverlay.VERTICAL_SPACING
+        val y = VERTICAL_INSET + rank * verticalSpacing + (if (left) playerNumberOffset else (battle!!.battleFormat.battleType.actorsPerSide - 1) * 10 - playerNumberOffset)
 
-        val x0 = x + if (left) PORTRAIT_OFFSET_X else { TILE_WIDTH - PORTRAIT_DIAMETER - PORTRAIT_OFFSET_Y }
-        val x1 = x0 + PORTRAIT_DIAMETER
-        val y0 = y + PORTRAIT_OFFSET_Y
-        val y1 = y0 + PORTRAIT_DIAMETER + PORTRAIT_OFFSET_Y
+        val x0 = x + if (left) portraitOffset_X else { titleWidth - portraitDiameter - portraitOffset_Y }
+        val x1 = x0 + portraitDiameter
+        val y0 = y + portraitOffset_Y
+        val y1 = y0 + portraitDiameter + portraitOffset_Y
 
         if (mouseX < x0 || mouseX > x1) return
         if (mouseY < y0 || mouseY > y1) return
@@ -89,7 +104,7 @@ object BattlePortraitHoverRenderer {
                 matrixStack = context.pose(),
                 texture = this.left,
                 x = x,
-                y = y + 40,
+                y = y + offset,
                 height = 30,
                 width = 2
             )
@@ -98,7 +113,7 @@ object BattlePortraitHoverRenderer {
                 matrixStack = context.pose(),
                 texture = this.middle,
                 x = x + 2,
-                y = y + 40,
+                y = y + offset,
                 height = 30,
                 width = width
             )
@@ -107,7 +122,7 @@ object BattlePortraitHoverRenderer {
                 matrixStack = context.pose(),
                 texture = this.right,
                 x = x + 2 + width,
-                y = y + 40,
+                y = y + offset,
                 height = 30,
                 width = 2
             )
@@ -117,7 +132,7 @@ object BattlePortraitHoverRenderer {
                 font = CobblemonResources.DEFAULT_LARGE,
                 text = formText,
                 x = x + 4,
-                y = y + 40 + 4
+                y = y + offset + 4
             )
 
             drawScaledText(
@@ -125,12 +140,12 @@ object BattlePortraitHoverRenderer {
                 font = CobblemonResources.DEFAULT_LARGE,
                 text = trainerText,
                 x = x + 4,
-                y = y + 40 + 17
+                y = y + offset + 17
             )
 
             TypeIcon(
                 x = x + 4 + formTextWidth + 4,
-                y = y + 40 + 4,
+                y = y + offset + 4,
                 type = form.primaryType,
                 secondaryType = form.secondaryType,
                 secondaryOffset = 10f,
@@ -143,7 +158,7 @@ object BattlePortraitHoverRenderer {
                 matrixStack = context.pose(),
                 texture = this.flippedLeft,
                 x = x + 129 - width - 2,
-                y = y + 40,
+                y = y + offset,
                 height = 30,
                 width = 2
             )
@@ -152,7 +167,7 @@ object BattlePortraitHoverRenderer {
                 matrixStack = context.pose(),
                 texture = this.middle,
                 x = x + 129 - width,
-                y = y + 40,
+                y = y + offset,
                 height = 30,
                 width = width
             )
@@ -161,7 +176,7 @@ object BattlePortraitHoverRenderer {
                 matrixStack = context.pose(),
                 texture = this.flippedRight,
                 x = x + 129,
-                y = y + 40,
+                y = y + offset,
                 height = 30,
                 width = 2
             )
@@ -171,7 +186,7 @@ object BattlePortraitHoverRenderer {
                 font = CobblemonResources.DEFAULT_LARGE,
                 text = formText,
                 x = x + 129 - width - 2 + 4,
-                y = y + 40 + 4
+                y = y + offset + 4
             )
 
             drawScaledText(
@@ -179,12 +194,12 @@ object BattlePortraitHoverRenderer {
                 font = CobblemonResources.DEFAULT_LARGE,
                 text = trainerText,
                 x = x + 129 - width - 2 + 4,
-                y = y + 40 + 17
+                y = y + offset + 17
             )
 
             TypeIcon(
                 x = x + 129 - width - 2 + 4 + formTextWidth + 4,
-                y = y + 40 + 4,
+                y = y + offset + 4,
                 type = form.primaryType,
                 secondaryType = form.secondaryType,
                 secondaryOffset = 10f,
